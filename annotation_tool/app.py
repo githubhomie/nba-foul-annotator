@@ -159,9 +159,30 @@ if 'is_playing' not in st.session_state:
 if 'load_all_frames' not in st.session_state:
     st.session_state.load_all_frames = False
 
-def load_csv_data(csv_path):
+@st.cache_data
+def load_csv_from_s3():
+    """Load CSV from S3"""
+    import boto3
+    from io import StringIO
+    import os
+
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+        region_name=os.getenv('AWS_REGION')
+    )
+
+    bucket = os.getenv('S3_BUCKET', 'nba-foul-dataset-oh')
+    key = 'metadata/dataset.csv'
+
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    csv_string = obj['Body'].read().decode('utf-8')
+    return StringIO(csv_string)
+
+def load_csv_data(csv_source):
     """Load and process CSV data"""
-    df = pd.read_csv(csv_path, dtype={'game_id': str})
+    df = pd.read_csv(csv_source, dtype={'game_id': str})
 
     # Group by clip (game_id + event_num)
     clips = []
@@ -259,11 +280,20 @@ def get_session_stats():
 with st.sidebar:
     st.header("📁 Dataset")
 
-    csv_file = st.file_uploader("Upload CSV file", type=['csv'])
-    if csv_file:
-        all_clips = load_csv_data(csv_file)
-        st.session_state.all_clips = all_clips
-        st.session_state.csv_loaded = True
+    # Auto-load CSV from S3
+    if not st.session_state.csv_loaded:
+        try:
+            with st.spinner("Loading dataset from S3..."):
+                csv_source = load_csv_from_s3()
+                all_clips = load_csv_data(csv_source)
+                st.session_state.all_clips = all_clips
+                st.session_state.csv_loaded = True
+        except Exception as e:
+            st.error(f"Failed to load dataset: {e}")
+            st.stop()
+
+    if st.session_state.csv_loaded:
+        all_clips = st.session_state.all_clips
 
         # Get stats
         stats = get_annotation_stats()
@@ -330,17 +360,7 @@ with st.sidebar:
 
         # Export
         if st.button("📤 Export Annotations"):
-            try:
-                # Save to local file
-                base_path = csv_file.name.replace('.csv', '')
-                output_path = f"{base_path}_annotated.csv"
-                # Get the actual file path from upload
-                with open('/tmp/temp_upload.csv', 'wb') as f:
-                    f.write(csv_file.getvalue())
-                result_path = export_annotations_to_csv('/tmp/temp_upload.csv', output_path)
-                st.success(f"✅ Exported to {result_path}")
-            except Exception as e:
-                st.error(f"Export failed: {e}")
+            st.info("Export feature coming soon - annotations are saved to S3")
 
 # Main annotation interface
 if not st.session_state.csv_loaded:
