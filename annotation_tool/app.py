@@ -46,9 +46,10 @@ st.markdown("""
         visibility: hidden !important;
         pointer-events: none !important;
     }
-    /* Adjust main content to account for sidebar */
-    section[data-testid="stSidebar"] ~ div {
-        margin-left: 21rem !important;
+    /* Remove any margins/padding that create white space */
+    .main .block-container {
+        padding-left: 2rem !important;
+        max-width: 100% !important;
     }
 </style>
 <script>
