@@ -562,6 +562,42 @@ else:
         if st.button("↶ Back", width="stretch", key="back_btn", disabled=not can_go_back, help="Undo - go back to previous clip"):
             back_clip()
 
+    # Keyboard shortcuts for frame navigation and quick save
+    st.markdown("""
+    <script>
+        document.addEventListener('keydown', function(e) {
+            // Left arrow - previous frame
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                const slider = document.querySelector('input[type="range"]');
+                if (slider) {
+                    slider.stepDown();
+                    slider.dispatchEvent(new Event('input', { bubbles: true }));
+                    slider.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+            // Right arrow - next frame
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                const slider = document.querySelector('input[type="range"]');
+                if (slider) {
+                    slider.stepUp();
+                    slider.dispatchEvent(new Event('input', { bubbles: true }));
+                    slider.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+            // Enter - quick save current frame
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const saveBtn = document.querySelector('[data-testid="baseButton-primary"]');
+                if (saveBtn && saveBtn.textContent.includes('SAVE')) {
+                    saveBtn.click();
+                }
+            }
+        });
+    </script>
+    """, unsafe_allow_html=True)
+
     # Scrubber directly below header
     st.markdown("<div class='controls-compact' style='margin-top: 0.3rem; margin-bottom: 0.3rem;'>", unsafe_allow_html=True)
 
