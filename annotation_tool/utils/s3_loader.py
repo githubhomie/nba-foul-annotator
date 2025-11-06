@@ -22,11 +22,13 @@ def get_s3_client():
         region_name=os.getenv('AWS_REGION')
     )
 
-@st.cache_data
+@st.cache_data(ttl=300, max_entries=100)
 def load_frame_from_s3(s3_url):
     """
     Load a single frame from S3 URL
     Returns PIL Image
+
+    Cache limited to 100 entries with 5 minute TTL to prevent memory buildup
     """
     try:
         # Parse S3 URL
