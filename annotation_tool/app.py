@@ -562,86 +562,6 @@ else:
         if st.button("↶ Back", width="stretch", key="back_btn", disabled=not can_go_back, help="Undo - go back to previous clip"):
             back_clip()
 
-    # Inject keyboard shortcuts using components.html for better event handling
-    import streamlit.components.v1 as components
-    components.html("""
-    <script>
-        // Remove any existing listeners first
-        window.removeEventListener('keydown', window.keydownHandler);
-
-        // Define handler
-        window.keydownHandler = function(e) {
-            // Don't trigger if user is typing in an input field
-            if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
-            if (e.target.tagName === 'TEXTAREA') return;
-
-            // Left arrow - previous frame
-            if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                e.stopPropagation();
-                const slider = parent.document.querySelector('input[type="range"]');
-                if (slider) {
-                    const currentVal = parseInt(slider.value);
-                    const minVal = parseInt(slider.min);
-                    if (currentVal > minVal) {
-                        slider.value = currentVal - 1;
-                        slider.dispatchEvent(new Event('input', { bubbles: true }));
-                        slider.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                }
-            }
-
-            // Right arrow - next frame
-            if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                e.stopPropagation();
-                const slider = parent.document.querySelector('input[type="range"]');
-                if (slider) {
-                    const currentVal = parseInt(slider.value);
-                    const maxVal = parseInt(slider.max);
-                    if (currentVal < maxVal) {
-                        slider.value = currentVal + 1;
-                        slider.dispatchEvent(new Event('input', { bubbles: true }));
-                        slider.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                }
-            }
-
-            // Enter - select and save current frame
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                e.stopPropagation();
-
-                // Find SELECT button
-                const selectBtn = Array.from(parent.document.querySelectorAll('button'))
-                    .find(btn => btn.textContent.includes('SELECT'));
-
-                if (selectBtn) {
-                    selectBtn.click();
-                    // Wait for state update then save
-                    setTimeout(() => {
-                        const saveBtn = Array.from(parent.document.querySelectorAll('button'))
-                            .find(btn => btn.textContent.includes('SAVE') && !btn.disabled);
-                        if (saveBtn) {
-                            saveBtn.click();
-                        }
-                    }, 150);
-                } else {
-                    // Already selected, just save
-                    const saveBtn = Array.from(parent.document.querySelectorAll('button'))
-                        .find(btn => btn.textContent.includes('SAVE') && !btn.disabled);
-                    if (saveBtn) {
-                        saveBtn.click();
-                    }
-                }
-            }
-        };
-
-        // Attach to parent document
-        parent.document.addEventListener('keydown', window.keydownHandler, true);
-    </script>
-    """, height=0)
-
     # Scrubber directly below header
     st.markdown("<div class='controls-compact' style='margin-top: 0.3rem; margin-bottom: 0.3rem;'>", unsafe_allow_html=True)
 
@@ -676,3 +596,64 @@ else:
     if current_frame_data:
         st.image(current_frame_data, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
+
+    # Hidden keyboard shortcut buttons
+    kb_col1, kb_col2, kb_col3 = st.columns([1, 1, 1])
+    with kb_col1:
+        if st.button("", key="kb_left", help="kb_left"):
+            if st.session_state.current_frame > min_val:
+                st.session_state.current_frame -= 1
+                st.rerun()
+    with kb_col2:
+        if st.button("", key="kb_right", help="kb_right"):
+            if st.session_state.current_frame < max_val:
+                st.session_state.current_frame += 1
+                st.rerun()
+    with kb_col3:
+        if st.button("", key="kb_enter", help="kb_enter"):
+            save_and_next(current_clip, st.session_state.current_frame)
+
+    # Hide the keyboard buttons with CSS
+    st.markdown("""
+    <style>
+    button[aria-label="kb_left"],
+    button[aria-label="kb_right"],
+    button[aria-label="kb_enter"] {
+        display: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # JavaScript keyboard handler
+    import streamlit.components.v1 as components
+    components.html("""
+    <script>
+    (function() {
+        const doc = window.parent.document;
+
+        if (window.parent.keyHandler) {
+            doc.removeEventListener('keydown', window.parent.keyHandler);
+        }
+
+        window.parent.keyHandler = function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            let btn = null;
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                btn = Array.from(doc.querySelectorAll('button')).find(b => b.getAttribute('aria-label') === 'kb_left');
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                btn = Array.from(doc.querySelectorAll('button')).find(b => b.getAttribute('aria-label') === 'kb_right');
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                btn = Array.from(doc.querySelectorAll('button')).find(b => b.getAttribute('aria-label') === 'kb_enter');
+            }
+
+            if (btn) btn.click();
+        };
+
+        doc.addEventListener('keydown', window.parent.keyHandler);
+    })();
+    </script>
+    """, height=0)
