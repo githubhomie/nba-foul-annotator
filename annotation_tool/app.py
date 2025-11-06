@@ -562,58 +562,85 @@ else:
         if st.button("↶ Back", width="stretch", key="back_btn", disabled=not can_go_back, help="Undo - go back to previous clip"):
             back_clip()
 
-    # Keyboard shortcuts for frame navigation and quick save
-    st.markdown("""
+    # Inject keyboard shortcuts using components.html for better event handling
+    import streamlit.components.v1 as components
+    components.html("""
     <script>
-        document.addEventListener('keydown', function(e) {
+        // Remove any existing listeners first
+        window.removeEventListener('keydown', window.keydownHandler);
+
+        // Define handler
+        window.keydownHandler = function(e) {
+            // Don't trigger if user is typing in an input field
+            if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+            if (e.target.tagName === 'TEXTAREA') return;
+
             // Left arrow - previous frame
             if (e.key === 'ArrowLeft') {
                 e.preventDefault();
-                const slider = document.querySelector('input[type="range"]');
+                e.stopPropagation();
+                const slider = parent.document.querySelector('input[type="range"]');
                 if (slider) {
-                    slider.stepDown();
-                    slider.dispatchEvent(new Event('input', { bubbles: true }));
-                    slider.dispatchEvent(new Event('change', { bubbles: true }));
+                    const currentVal = parseInt(slider.value);
+                    const minVal = parseInt(slider.min);
+                    if (currentVal > minVal) {
+                        slider.value = currentVal - 1;
+                        slider.dispatchEvent(new Event('input', { bubbles: true }));
+                        slider.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
                 }
             }
+
             // Right arrow - next frame
             if (e.key === 'ArrowRight') {
                 e.preventDefault();
-                const slider = document.querySelector('input[type="range"]');
+                e.stopPropagation();
+                const slider = parent.document.querySelector('input[type="range"]');
                 if (slider) {
-                    slider.stepUp();
-                    slider.dispatchEvent(new Event('input', { bubbles: true }));
-                    slider.dispatchEvent(new Event('change', { bubbles: true }));
+                    const currentVal = parseInt(slider.value);
+                    const maxVal = parseInt(slider.max);
+                    if (currentVal < maxVal) {
+                        slider.value = currentVal + 1;
+                        slider.dispatchEvent(new Event('input', { bubbles: true }));
+                        slider.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
                 }
             }
-            // Enter - select current frame and immediately save
+
+            // Enter - select and save current frame
             if (e.key === 'Enter') {
                 e.preventDefault();
-                // First click SELECT button if it exists
-                const selectBtn = Array.from(document.querySelectorAll('[data-testid="baseButton-primary"]'))
+                e.stopPropagation();
+
+                // Find SELECT button
+                const selectBtn = Array.from(parent.document.querySelectorAll('button'))
                     .find(btn => btn.textContent.includes('SELECT'));
+
                 if (selectBtn) {
                     selectBtn.click();
-                    // Wait a moment for state to update, then click SAVE
+                    // Wait for state update then save
                     setTimeout(() => {
-                        const saveBtn = Array.from(document.querySelectorAll('[data-testid="baseButton-primary"]'))
-                            .find(btn => btn.textContent.includes('SAVE'));
+                        const saveBtn = Array.from(parent.document.querySelectorAll('button'))
+                            .find(btn => btn.textContent.includes('SAVE') && !btn.disabled);
                         if (saveBtn) {
                             saveBtn.click();
                         }
-                    }, 100);
+                    }, 150);
                 } else {
-                    // If SELECT button doesn't exist, just click SAVE
-                    const saveBtn = Array.from(document.querySelectorAll('[data-testid="baseButton-primary"]'))
-                        .find(btn => btn.textContent.includes('SAVE'));
+                    // Already selected, just save
+                    const saveBtn = Array.from(parent.document.querySelectorAll('button'))
+                        .find(btn => btn.textContent.includes('SAVE') && !btn.disabled);
                     if (saveBtn) {
                         saveBtn.click();
                     }
                 }
             }
-        });
+        };
+
+        // Attach to parent document
+        parent.document.addEventListener('keydown', window.keydownHandler, true);
     </script>
-    """, unsafe_allow_html=True)
+    """, height=0)
 
     # Scrubber directly below header
     st.markdown("<div class='controls-compact' style='margin-top: 0.3rem; margin-bottom: 0.3rem;'>", unsafe_allow_html=True)
