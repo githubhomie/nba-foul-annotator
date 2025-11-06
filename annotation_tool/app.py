@@ -597,63 +597,24 @@ else:
         st.image(current_frame_data, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Hidden keyboard shortcut buttons
-    kb_col1, kb_col2, kb_col3 = st.columns([1, 1, 1])
-    with kb_col1:
-        if st.button("", key="kb_left", help="kb_left"):
+    # Navigation controls at bottom
+    st.markdown("<div style='margin-top: 1rem; text-align: center;'>", unsafe_allow_html=True)
+    nav_col1, nav_col2, nav_col3, nav_col4, nav_col5 = st.columns([1, 0.8, 0.8, 1.5, 1])
+
+    with nav_col2:
+        if st.button("← Prev", key="nav_left", use_container_width=True):
             if st.session_state.current_frame > min_val:
                 st.session_state.current_frame -= 1
                 st.rerun()
-    with kb_col2:
-        if st.button("", key="kb_right", help="kb_right"):
+
+    with nav_col3:
+        if st.button("Next →", key="nav_right", use_container_width=True):
             if st.session_state.current_frame < max_val:
                 st.session_state.current_frame += 1
                 st.rerun()
-    with kb_col3:
-        if st.button("", key="kb_enter", help="kb_enter"):
+
+    with nav_col4:
+        if st.button(f"Save Frame {st.session_state.current_frame}", key="nav_save", type="primary", use_container_width=True):
             save_and_next(current_clip, st.session_state.current_frame)
 
-    # Hide the keyboard buttons with CSS
-    st.markdown("""
-    <style>
-    button[aria-label="kb_left"],
-    button[aria-label="kb_right"],
-    button[aria-label="kb_enter"] {
-        display: none !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # JavaScript keyboard handler
-    import streamlit.components.v1 as components
-    components.html("""
-    <script>
-    (function() {
-        const doc = window.parent.document;
-
-        if (window.parent.keyHandler) {
-            doc.removeEventListener('keydown', window.parent.keyHandler);
-        }
-
-        window.parent.keyHandler = function(e) {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-            let btn = null;
-            if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                btn = Array.from(doc.querySelectorAll('button')).find(b => b.getAttribute('aria-label') === 'kb_left');
-            } else if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                btn = Array.from(doc.querySelectorAll('button')).find(b => b.getAttribute('aria-label') === 'kb_right');
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                btn = Array.from(doc.querySelectorAll('button')).find(b => b.getAttribute('aria-label') === 'kb_enter');
-            }
-
-            if (btn) btn.click();
-        };
-
-        doc.addEventListener('keydown', window.parent.keyHandler);
-    })();
-    </script>
-    """, height=0)
+    st.markdown("</div>", unsafe_allow_html=True)
