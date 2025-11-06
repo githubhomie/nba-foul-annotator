@@ -18,6 +18,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Force sidebar to always be open
+st.markdown("""
+<style>
+    [data-testid="collapsedControl"] {
+        display: none !important;
+    }
+    section[data-testid="stSidebar"] {
+        width: 300px !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Clean centered layout
 st.markdown("""
 <style>
@@ -461,10 +473,7 @@ else:
     pct = ((st.session_state.current_clip_idx + 1) / len(clips)) * 100
 
     # Header with info and action buttons
-    col0, col1, col2, col3, col4, col5, col6 = st.columns([0.5, 2.0, 1.2, 1.2, 0.8, 0.8, 0.8])
-    with col0:
-        if st.button("☰", width="stretch", key="sidebar_btn", help="Open sidebar"):
-            st.rerun()
+    col1, col2, col3, col4, col5, col6 = st.columns([2.5, 1.2, 1.2, 0.8, 0.8, 0.8])
     with col1:
         st.markdown(
             f"<div style='font-size: 0.85rem; color: #666; margin-bottom: 0; padding-top: 0.3rem;'>"
