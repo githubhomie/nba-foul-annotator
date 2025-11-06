@@ -158,6 +158,8 @@ if 'is_playing' not in st.session_state:
     st.session_state.is_playing = False
 if 'load_all_frames' not in st.session_state:
     st.session_state.load_all_frames = False
+if 'clip_history' not in st.session_state:
+    st.session_state.clip_history = []
 
 @st.cache_data
 def load_csv_from_s3():
@@ -225,8 +227,14 @@ def filter_clips(clips):
 
     return filtered
 
-def navigate_to_clip(idx):
+def navigate_to_clip(idx, add_to_history=True):
     """Navigate to specific clip index"""
+    if add_to_history and st.session_state.current_clip_idx != idx:
+        # Add current clip to history before navigating away
+        st.session_state.clip_history.append(st.session_state.current_clip_idx)
+        # Keep history limited to last 10 clips
+        if len(st.session_state.clip_history) > 10:
+            st.session_state.clip_history.pop(0)
     st.session_state.current_clip_idx = max(0, idx)
     st.session_state.selected_frame = None
     st.session_state.current_frame = 13  # Reset to ideal frame
@@ -240,6 +248,13 @@ def next_clip():
 def prev_clip():
     """Move to previous clip"""
     navigate_to_clip(st.session_state.current_clip_idx - 1)
+
+def back_clip():
+    """Go back to previous clip in history (undo)"""
+    if st.session_state.clip_history:
+        prev_idx = st.session_state.clip_history.pop()
+        navigate_to_clip(prev_idx, add_to_history=False)
+        st.rerun()
 
 def save_and_next(clip, frame_idx, notes=""):
     """Save annotation and move to next clip"""
@@ -446,7 +461,10 @@ else:
     pct = ((st.session_state.current_clip_idx + 1) / len(clips)) * 100
 
     # Header with info and action buttons
-    col1, col2, col3, col4, col5 = st.columns([2.5, 1.2, 1.2, 0.8, 0.8])
+    col0, col1, col2, col3, col4, col5, col6 = st.columns([0.5, 2.0, 1.2, 1.2, 0.8, 0.8, 0.8])
+    with col0:
+        if st.button("☰", width="stretch", key="sidebar_btn", help="Open sidebar"):
+            st.rerun()
     with col1:
         st.markdown(
             f"<div style='font-size: 0.85rem; color: #666; margin-bottom: 0; padding-top: 0.3rem;'>"
@@ -494,6 +512,10 @@ else:
         if st.button(btn_text, width="stretch", key="load_all_btn"):
             st.session_state.load_all_frames = not st.session_state.load_all_frames
             st.rerun()
+    with col6:
+        can_go_back = len(st.session_state.clip_history) > 0
+        if st.button("↶ Back", width="stretch", key="back_btn", disabled=not can_go_back, help="Undo - go back to previous clip"):
+            back_clip()
 
     # Scrubber directly below header
     st.markdown("<div class='controls-compact' style='margin-top: 0.3rem; margin-bottom: 0.3rem;'>", unsafe_allow_html=True)
@@ -513,7 +535,7 @@ else:
         min_value=min_val,
         max_value=max_val,
         value=st.session_state.current_frame,
-        key="frame_slider",
+        key=f"frame_slider_{st.session_state.current_clip_idx}",
         label_visibility="collapsed"
     )
     if new_frame != st.session_state.current_frame:
