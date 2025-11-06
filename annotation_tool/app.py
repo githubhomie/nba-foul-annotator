@@ -586,12 +586,29 @@ else:
                     slider.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             }
-            // Enter - quick save current frame
+            // Enter - select current frame and immediately save
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const saveBtn = document.querySelector('[data-testid="baseButton-primary"]');
-                if (saveBtn && saveBtn.textContent.includes('SAVE')) {
-                    saveBtn.click();
+                // First click SELECT button if it exists
+                const selectBtn = Array.from(document.querySelectorAll('[data-testid="baseButton-primary"]'))
+                    .find(btn => btn.textContent.includes('SELECT'));
+                if (selectBtn) {
+                    selectBtn.click();
+                    // Wait a moment for state to update, then click SAVE
+                    setTimeout(() => {
+                        const saveBtn = Array.from(document.querySelectorAll('[data-testid="baseButton-primary"]'))
+                            .find(btn => btn.textContent.includes('SAVE'));
+                        if (saveBtn) {
+                            saveBtn.click();
+                        }
+                    }, 100);
+                } else {
+                    // If SELECT button doesn't exist, just click SAVE
+                    const saveBtn = Array.from(document.querySelectorAll('[data-testid="baseButton-primary"]'))
+                        .find(btn => btn.textContent.includes('SAVE'));
+                    if (saveBtn) {
+                        saveBtn.click();
+                    }
                 }
             }
         });
