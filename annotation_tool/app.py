@@ -54,21 +54,27 @@ st.markdown("""
 
     /* Show/hide desktop vs mobile elements */
     .mobile-only {
-        display: none;
+        display: none !important;
     }
 
     .desktop-only {
-        display: block;
+        display: block !important;
     }
 
     /* MOBILE RESPONSIVE STYLES - Must come AFTER desktop to override */
     @media (max-width: 768px) {
-        /* Show mobile, hide desktop */
-        .mobile-only {
+        /* Show mobile, hide desktop - target Streamlit's container divs */
+        div.mobile-only,
+        div.mobile-only > div,
+        div.mobile-only > div > div,
+        .mobile-only div[data-testid="stHorizontalBlock"] {
             display: block !important;
         }
 
-        .desktop-only {
+        div.desktop-only,
+        div.desktop-only > div,
+        div.desktop-only > div > div,
+        .desktop-only div[data-testid="stHorizontalBlock"] {
             display: none !important;
         }
         /* Sidebar full width on mobile */
@@ -86,16 +92,25 @@ st.markdown("""
             margin: 0 !important;
         }
 
-        /* Mobile button styling */
-        .mobile-only .stButton > button {
-            font-size: 0.9rem !important;
-            padding: 0.6rem 0.5rem !important;
-            font-weight: 600 !important;
+        /* Force horizontal button layout on mobile */
+        .mobile-only div[data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 0.3rem !important;
         }
 
-        /* Compact columns for mobile buttons */
         .mobile-only div[data-testid="column"] {
-            padding: 0.2rem !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Mobile button styling */
+        .mobile-only .stButton > button {
+            font-size: 0.85rem !important;
+            padding: 0.6rem 0.3rem !important;
+            font-weight: 600 !important;
+            width: 100% !important;
         }
 
         /* Make frame container full-width by breaking out of padding */
