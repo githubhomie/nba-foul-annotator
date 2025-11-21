@@ -570,12 +570,41 @@ else:
 
     # Foul type filter at bottom
     st.markdown("---")
-    foul_types = sorted(set(clip['foul_type'] for clip in all_clips))
-    options = ["All"] + foul_types
-    current_index = options.index(st.session_state.filter_foul_type) if st.session_state.filter_foul_type in options else 0
-    st.session_state.filter_foul_type = st.selectbox(
-        "Filter by Foul Type",
-        options,
-        index=current_index,
-        key="foul_type_filter_bottom"
-    )
+
+    # Sidebar toggle button and filter in same row
+    col_filter, col_sidebar = st.columns([3, 1])
+
+    with col_filter:
+        foul_types = sorted(set(clip['foul_type'] for clip in all_clips))
+        options = ["All"] + foul_types
+        current_index = options.index(st.session_state.filter_foul_type) if st.session_state.filter_foul_type in options else 0
+        st.session_state.filter_foul_type = st.selectbox(
+            "Filter by Foul Type",
+            options,
+            index=current_index,
+            key="foul_type_filter_bottom"
+        )
+
+    with col_sidebar:
+        st.markdown("<br>", unsafe_allow_html=True)  # Add spacing to align with selectbox
+        st.markdown("""
+        <button onclick="
+            const sidebar = window.parent.document.querySelector('[data-testid=\\'stSidebar\\']');
+            if (sidebar) {
+                const isCollapsed = sidebar.getAttribute('aria-expanded') === 'false';
+                const collapseButton = window.parent.document.querySelector('[data-testid=\\'collapsedControl\\']');
+                if (collapseButton && isCollapsed) {
+                    collapseButton.click();
+                }
+            }
+        " style="
+            width: 100%;
+            padding: 0.5rem;
+            background-color: #262730;
+            color: white;
+            border: 1px solid #4e4e5a;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-weight: 600;
+        ">📊 Settings</button>
+        """, unsafe_allow_html=True)
