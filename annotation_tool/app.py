@@ -21,6 +21,12 @@ st.set_page_config(
 # Mobile-friendly sidebar CSS - properly supports collapse/expand
 st.markdown("""
 <style>
+    /* Ensure sidebar is visible by default */
+    section[data-testid="stSidebar"] {
+        display: block !important;
+        visibility: visible !important;
+    }
+
     /* Mobile responsive sidebar */
     @media (max-width: 768px) {
         section[data-testid="stSidebar"] {
@@ -29,11 +35,31 @@ st.markdown("""
         section[data-testid="stSidebar"][aria-expanded="true"] {
             width: 100% !important;
         }
+
+        /* Full width frames with no padding on mobile */
+        .block-container {
+            padding: 0.5rem !important;
+            max-width: 100% !important;
+        }
+
+        /* Smaller buttons on mobile */
+        .stButton > button {
+            font-size: 0.7rem !important;
+            padding: 0.3rem 0.5rem !important;
+        }
+
+        /* Hide bottom navigation buttons on mobile */
+        div[data-testid="column"]:has(button[key="nav_left"]),
+        div[data-testid="column"]:has(button[key="nav_right"]),
+        div[data-testid="column"]:has(button[key="nav_save"]) {
+            display: none !important;
+        }
     }
 
     /* Ensure sidebar collapse button is visible and functional */
     button[data-testid="collapsedControl"] {
         display: block !important;
+        visibility: visible !important;
     }
 </style>
 """, unsafe_allow_html=True)
