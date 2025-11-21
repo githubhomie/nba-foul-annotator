@@ -527,63 +527,77 @@ else:
                 f"{'  ⚠️ Was: ' + str(existing_annotation['foul_frame']) if existing_annotation else ''}"
                 f"</div>", unsafe_allow_html=True)
 
-    # HTML buttons that don't stack - with JavaScript to trigger Streamlit buttons
+    # HTML buttons that don't stack - use onclick to set session state
     selected_frame = st.session_state.selected_frame
     can_save = selected_frame is not None
     can_go_back = len(st.session_state.clip_history) > 0
     btn_text = "8-22" if st.session_state.load_all_frames else "All"
 
+    # Initialize button action state
+    if 'button_action' not in st.session_state:
+        st.session_state.button_action = None
+
     st.markdown(f"""
     <div style="display: flex; gap: 0.3rem; margin-bottom: 0.5rem; flex-wrap: nowrap;">
-        <button onclick="document.getElementById('select-trigger').click()"
-                style="flex: 1.2; padding: 0.6rem 0.5rem; background: #ff4b4b; color: white;
-                       border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer;
-                       font-size: 0.85rem;">
-            ✓ SEL {st.session_state.current_frame}
-        </button>
-        <button onclick="document.getElementById('save-trigger').click()"
-                style="flex: 1.2; padding: 0.6rem 0.5rem;
-                       background: {'#ff4b4b' if can_save else '#cccccc'};
-                       color: white; border: none; border-radius: 0.5rem;
-                       font-weight: 600; cursor: {'pointer' if can_save else 'not-allowed'};
-                       font-size: 0.85rem;"
-                {'disabled' if not can_save else ''}>
-            ✅ SAVE {selected_frame if can_save else ''}
-        </button>
-        <button onclick="document.getElementById('flag-trigger').click()"
-                style="flex: 0.6; padding: 0.6rem 0.3rem; background: #262730; color: white;
-                       border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.85rem;">
-            🚩
-        </button>
-        <button onclick="document.getElementById('toggle-trigger').click()"
-                style="flex: 0.6; padding: 0.6rem 0.3rem; background: #262730; color: white;
-                       border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.85rem;">
-            {btn_text}
-        </button>
-        <button onclick="document.getElementById('back-trigger').click()"
-                style="flex: 0.6; padding: 0.6rem 0.3rem;
-                       background: {'#262730' if can_go_back else '#444'}; color: white;
-                       border: none; border-radius: 0.5rem;
-                       cursor: {'pointer' if can_go_back else 'not-allowed'}; font-size: 0.85rem;"
-                {'disabled' if not can_go_back else ''}>
-            ↶
-        </button>
+        <form action="" method="get">
+            <button type="submit" name="action" value="select"
+                    style="flex: 1.2; padding: 0.6rem 0.5rem; background: #ff4b4b; color: white;
+                           border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer;
+                           font-size: 0.85rem; width: 100%;">
+                ✓ SEL {st.session_state.current_frame}
+            </button>
+        </form>
+        <form action="" method="get">
+            <button type="submit" name="action" value="save"
+                    style="flex: 1.2; padding: 0.6rem 0.5rem;
+                           background: {'#ff4b4b' if can_save else '#cccccc'};
+                           color: white; border: none; border-radius: 0.5rem;
+                           font-weight: 600; cursor: {'pointer' if can_save else 'not-allowed'};
+                           font-size: 0.85rem; width: 100%;"
+                    {'disabled' if not can_save else ''}>
+                ✅ SAVE {selected_frame if can_save else ''}
+            </button>
+        </form>
+        <form action="" method="get">
+            <button type="submit" name="action" value="flag"
+                    style="flex: 0.6; padding: 0.6rem 0.3rem; background: #262730; color: white;
+                           border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.85rem; width: 100%;">
+                🚩
+            </button>
+        </form>
+        <form action="" method="get">
+            <button type="submit" name="action" value="toggle"
+                    style="flex: 0.6; padding: 0.6rem 0.3rem; background: #262730; color: white;
+                           border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.85rem; width: 100%;">
+                {btn_text}
+            </button>
+        </form>
+        <form action="" method="get">
+            <button type="submit" name="action" value="back"
+                    style="flex: 0.6; padding: 0.6rem 0.3rem;
+                           background: {'#262730' if can_go_back else '#444'}; color: white;
+                           border: none; border-radius: 0.5rem;
+                           cursor: {'pointer' if can_go_back else 'not-allowed'}; font-size: 0.85rem; width: 100%;"
+                    {'disabled' if not can_go_back else ''}>
+                ↶
+            </button>
+        </form>
     </div>
     """, unsafe_allow_html=True)
 
-    # Hidden Streamlit buttons that handle the logic (wrapped in hidden container)
-    st.markdown('<div style="display: none;">', unsafe_allow_html=True)
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        if st.button("Select Frame", key="select-trigger"):
+    # Check query params for button action
+    query_params = st.query_params
+    if 'action' in query_params:
+        action = query_params['action']
+
+        if action == 'select':
             st.session_state.selected_frame = st.session_state.current_frame
+            st.query_params.clear()
             st.rerun()
-    with col2:
-        if can_save:
-            if st.button("Save Frame", key="save-trigger"):
-                save_and_next(current_clip, st.session_state.selected_frame)
-    with col3:
-        if st.button("Flag Clip", key="flag-trigger"):
+        elif action == 'save' and can_save:
+            save_and_next(current_clip, st.session_state.selected_frame)
+            st.query_params.clear()
+        elif action == 'flag':
             save_annotation(
                 current_clip['game_id'],
                 current_clip['event_num'],
@@ -593,16 +607,15 @@ else:
             )
             st.session_state.session_annotations += 1
             next_clip()
+            st.query_params.clear()
             st.rerun()
-    with col4:
-        if st.button("Toggle Frames", key="toggle-trigger"):
+        elif action == 'toggle':
             st.session_state.load_all_frames = not st.session_state.load_all_frames
+            st.query_params.clear()
             st.rerun()
-    with col5:
-        if can_go_back:
-            if st.button("Go Back", key="back-trigger"):
-                back_clip()
-    st.markdown('</div>', unsafe_allow_html=True)
+        elif action == 'back' and can_go_back:
+            back_clip()
+            st.query_params.clear()
 
     # Scrubber directly below header
     st.markdown("<div class='controls-compact' style='margin-top: 0.3rem; margin-bottom: 0.3rem;'>", unsafe_allow_html=True)
