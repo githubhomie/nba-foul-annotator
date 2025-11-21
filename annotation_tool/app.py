@@ -52,78 +52,35 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* Show/hide desktop vs mobile elements using data-testid */
-    [data-testid="mobile-layout"] {
-        display: none !important;
-    }
-
-    [data-testid="desktop-layout"] {
-        display: block !important;
-    }
-
-    /* MOBILE RESPONSIVE STYLES - Must come AFTER desktop to override */
+    /* MOBILE RESPONSIVE STYLES */
     @media (max-width: 768px) {
-        [data-testid="mobile-layout"] {
-            display: block !important;
-        }
-
-        [data-testid="desktop-layout"] {
-            display: none !important;
-        }
         /* Sidebar full width on mobile */
         section[data-testid="stSidebar"] {
             width: 100% !important;
         }
-        section[data-testid="stSidebar"][aria-expanded="true"] {
-            width: 100% !important;
-        }
 
-        /* Remove all padding for full-width on mobile */
+        /* Reduce padding on mobile */
         .block-container {
             padding: 0.5rem !important;
             max-width: 100% !important;
-            margin: 0 !important;
         }
 
-        /* Force horizontal button layout on mobile */
-        [data-testid="mobile-layout"] div[data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-direction: row !important;
-            gap: 0.3rem !important;
+        /* Smaller buttons on mobile */
+        .stButton > button {
+            font-size: 0.75rem !important;
+            padding: 0.5rem 0.3rem !important;
         }
 
-        [data-testid="mobile-layout"] div[data-testid="column"] {
-            flex: 1 !important;
-            min-width: 0 !important;
-            padding: 0 !important;
-        }
-
-        /* Mobile button styling */
-        [data-testid="mobile-layout"] .stButton > button {
-            font-size: 0.85rem !important;
-            padding: 0.6rem 0.3rem !important;
-            font-weight: 600 !important;
-            width: 100% !important;
-        }
-
-        /* Make frame container full-width by breaking out of padding */
+        /* Make frame container full-width */
         .frame-container {
             margin-left: -0.5rem !important;
             margin-right: -0.5rem !important;
             width: 100vw !important;
-            max-width: 100vw !important;
         }
 
-        /* Full width images */
         .frame-container img {
             width: 100% !important;
-            max-width: 100% !important;
             display: block !important;
-        }
-
-        /* Compact slider */
-        .stSlider {
-            padding: 0.3rem !important;
         }
     }
 </style>
@@ -556,23 +513,22 @@ else:
     foul_class = foul_type.replace('_', '-')
     pct = ((st.session_state.current_clip_idx + 1) / len(clips)) * 100
 
-    # Header info (desktop only - hidden on mobile)
-    st.markdown(f"<div data-testid='desktop-layout' style='font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;'>"
+    # Header info
+    st.markdown(f"<div style='font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;'>"
                 f"<span class='foul-badge {foul_class}'>{foul_type.upper()}</span>"
                 f"{current_clip['fouler_name']} → {current_clip['fouled_player_name']} | "
                 f"{st.session_state.current_clip_idx + 1}/{len(clips)} ({pct:.0f}%)"
                 f"{'  ⚠️ Was: ' + str(existing_annotation['foul_frame']) if existing_annotation else ''}"
                 f"</div>", unsafe_allow_html=True)
 
-    # Desktop button layout
-    st.markdown("<div data-testid='desktop-layout'>", unsafe_allow_html=True)
-    col1, col2, col3, col4, col5 = st.columns([1.2, 1.2, 0.8, 0.8, 0.8])
+    # Single responsive button layout - st.columns automatically stacks on mobile
+    col1, col2, col3, col4, col5 = st.columns([1.2, 1.2, 0.8, 0.8, 0.8], gap="small")
     with col1:
         if st.button(
             f"✓ SELECT {st.session_state.current_frame}",
-            width="stretch",
+            use_container_width=True,
             type="primary",
-            key="select_btn_desktop"
+            key="select_btn"
         ):
             st.session_state.selected_frame = st.session_state.current_frame
             st.rerun()
@@ -580,15 +536,15 @@ else:
         if st.session_state.selected_frame is not None:
             if st.button(
                 f"✅ SAVE {st.session_state.selected_frame}",
-                width="stretch",
+                use_container_width=True,
                 type="primary",
-                key="save_btn_desktop"
+                key="save_btn"
             ):
                 save_and_next(current_clip, st.session_state.selected_frame)
         else:
-            st.button("Select first", width="stretch", disabled=True, key="save_btn_disabled_desktop")
+            st.button("Select first", use_container_width=True, disabled=True, key="save_btn_disabled")
     with col3:
-        if st.button("🚩 Flag", width="stretch", key="flag_btn_desktop"):
+        if st.button("🚩 Flag", use_container_width=True, key="flag_btn"):
             save_annotation(
                 current_clip['game_id'],
                 current_clip['event_num'],
@@ -601,39 +557,13 @@ else:
             st.rerun()
     with col4:
         btn_text = "8-22" if st.session_state.load_all_frames else "All 30"
-        if st.button(btn_text, width="stretch", key="load_all_btn_desktop"):
+        if st.button(btn_text, use_container_width=True, key="load_all_btn"):
             st.session_state.load_all_frames = not st.session_state.load_all_frames
             st.rerun()
     with col5:
         can_go_back = len(st.session_state.clip_history) > 0
-        if st.button("↶ Back", width="stretch", key="back_btn_desktop", disabled=not can_go_back, help="Undo - go back to previous clip"):
+        if st.button("↶ Back", use_container_width=True, key="back_btn", disabled=not can_go_back, help="Undo - go back to previous clip"):
             back_clip()
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # Mobile button layout (hidden on desktop)
-    st.markdown("<div data-testid='mobile-layout'>", unsafe_allow_html=True)
-    mobile_col1, mobile_col2 = st.columns(2)
-    with mobile_col1:
-        if st.button(
-            f"✓ SEL {st.session_state.current_frame}",
-            width="stretch",
-            type="primary",
-            key="select_btn_mobile"
-        ):
-            st.session_state.selected_frame = st.session_state.current_frame
-            st.rerun()
-    with mobile_col2:
-        if st.session_state.selected_frame is not None:
-            if st.button(
-                f"✅ SAVE {st.session_state.selected_frame}",
-                width="stretch",
-                type="primary",
-                key="save_btn_mobile"
-            ):
-                save_and_next(current_clip, st.session_state.selected_frame)
-        else:
-            st.button("Select first", width="stretch", disabled=True, key="save_btn_disabled_mobile")
-    st.markdown("</div>", unsafe_allow_html=True)
 
     # Scrubber directly below header
     st.markdown("<div class='controls-compact' style='margin-top: 0.3rem; margin-bottom: 0.3rem;'>", unsafe_allow_html=True)
@@ -668,30 +598,4 @@ else:
     st.markdown(f"<div class='{container_class}'>", unsafe_allow_html=True)
     if current_frame_data:
         st.image(current_frame_data, width="stretch")
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # Mobile buttons below video (Flag and All 30)
-    st.markdown("<div data-testid='mobile-layout'>", unsafe_allow_html=True)
-    mobile_col3, mobile_col4, mobile_col5 = st.columns([1, 1, 1])
-    with mobile_col3:
-        if st.button("🚩 Flag", width="stretch", key="flag_btn_mobile"):
-            save_annotation(
-                current_clip['game_id'],
-                current_clip['event_num'],
-                -1,
-                annotator=st.session_state.annotator_name,
-                notes="Flagged as bad/unclear clip"
-            )
-            st.session_state.session_annotations += 1
-            next_clip()
-            st.rerun()
-    with mobile_col4:
-        btn_text = "8-22" if st.session_state.load_all_frames else "All 30"
-        if st.button(btn_text, width="stretch", key="load_all_btn_mobile"):
-            st.session_state.load_all_frames = not st.session_state.load_all_frames
-            st.rerun()
-    with mobile_col5:
-        can_go_back = len(st.session_state.clip_history) > 0
-        if st.button("↶ Back", width="stretch", key="back_btn_mobile", disabled=not can_go_back):
-            back_clip()
     st.markdown("</div>", unsafe_allow_html=True)
