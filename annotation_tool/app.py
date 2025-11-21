@@ -52,18 +52,6 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* Hide collapsed Streamlit trigger buttons */
-    button[data-testid="baseButton-secondary"][aria-label="select"],
-    button[data-testid="baseButton-secondary"][aria-label="save"],
-    button[data-testid="baseButton-secondary"][aria-label="flag"],
-    button[data-testid="baseButton-secondary"][aria-label="toggle"],
-    button[data-testid="baseButton-secondary"][aria-label="back"] {
-        display: none !important;
-        height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
     /* MOBILE RESPONSIVE STYLES */
     @media (max-width: 768px) {
         /* Hide desktop info header on mobile */
@@ -583,18 +571,19 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    # Hidden Streamlit buttons that handle the logic
+    # Hidden Streamlit buttons that handle the logic (wrapped in hidden container)
+    st.markdown('<div style="display: none;">', unsafe_allow_html=True)
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
-        if st.button("select", key="select-trigger", label_visibility="collapsed"):
+        if st.button("Select Frame", key="select-trigger"):
             st.session_state.selected_frame = st.session_state.current_frame
             st.rerun()
     with col2:
         if can_save:
-            if st.button("save", key="save-trigger", label_visibility="collapsed"):
+            if st.button("Save Frame", key="save-trigger"):
                 save_and_next(current_clip, st.session_state.selected_frame)
     with col3:
-        if st.button("flag", key="flag-trigger", label_visibility="collapsed"):
+        if st.button("Flag Clip", key="flag-trigger"):
             save_annotation(
                 current_clip['game_id'],
                 current_clip['event_num'],
@@ -606,13 +595,14 @@ else:
             next_clip()
             st.rerun()
     with col4:
-        if st.button("toggle", key="toggle-trigger", label_visibility="collapsed"):
+        if st.button("Toggle Frames", key="toggle-trigger"):
             st.session_state.load_all_frames = not st.session_state.load_all_frames
             st.rerun()
     with col5:
         if can_go_back:
-            if st.button("back", key="back-trigger", label_visibility="collapsed"):
+            if st.button("Go Back", key="back-trigger"):
                 back_clip()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Scrubber directly below header
     st.markdown("<div class='controls-compact' style='margin-top: 0.3rem; margin-bottom: 0.3rem;'>", unsafe_allow_html=True)
