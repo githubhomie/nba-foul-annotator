@@ -52,29 +52,22 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* Show/hide desktop vs mobile elements */
-    .mobile-only {
+    /* Show/hide desktop vs mobile elements using data-testid */
+    [data-testid="mobile-layout"] {
         display: none !important;
     }
 
-    .desktop-only {
+    [data-testid="desktop-layout"] {
         display: block !important;
     }
 
     /* MOBILE RESPONSIVE STYLES - Must come AFTER desktop to override */
     @media (max-width: 768px) {
-        /* Show mobile, hide desktop - target Streamlit's container divs */
-        div.mobile-only,
-        div.mobile-only > div,
-        div.mobile-only > div > div,
-        .mobile-only div[data-testid="stHorizontalBlock"] {
+        [data-testid="mobile-layout"] {
             display: block !important;
         }
 
-        div.desktop-only,
-        div.desktop-only > div,
-        div.desktop-only > div > div,
-        .desktop-only div[data-testid="stHorizontalBlock"] {
+        [data-testid="desktop-layout"] {
             display: none !important;
         }
         /* Sidebar full width on mobile */
@@ -93,20 +86,20 @@ st.markdown("""
         }
 
         /* Force horizontal button layout on mobile */
-        .mobile-only div[data-testid="stHorizontalBlock"] {
+        [data-testid="mobile-layout"] div[data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             gap: 0.3rem !important;
         }
 
-        .mobile-only div[data-testid="column"] {
+        [data-testid="mobile-layout"] div[data-testid="column"] {
             flex: 1 !important;
             min-width: 0 !important;
             padding: 0 !important;
         }
 
         /* Mobile button styling */
-        .mobile-only .stButton > button {
+        [data-testid="mobile-layout"] .stButton > button {
             font-size: 0.85rem !important;
             padding: 0.6rem 0.3rem !important;
             font-weight: 600 !important;
@@ -564,7 +557,7 @@ else:
     pct = ((st.session_state.current_clip_idx + 1) / len(clips)) * 100
 
     # Header info (desktop only - hidden on mobile)
-    st.markdown(f"<div class='desktop-only' style='font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;'>"
+    st.markdown(f"<div data-testid='desktop-layout' style='font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;'>"
                 f"<span class='foul-badge {foul_class}'>{foul_type.upper()}</span>"
                 f"{current_clip['fouler_name']} → {current_clip['fouled_player_name']} | "
                 f"{st.session_state.current_clip_idx + 1}/{len(clips)} ({pct:.0f}%)"
@@ -572,7 +565,7 @@ else:
                 f"</div>", unsafe_allow_html=True)
 
     # Desktop button layout
-    st.markdown("<div class='desktop-only'>", unsafe_allow_html=True)
+    st.markdown("<div data-testid='desktop-layout'>", unsafe_allow_html=True)
     col1, col2, col3, col4, col5 = st.columns([1.2, 1.2, 0.8, 0.8, 0.8])
     with col1:
         if st.button(
@@ -618,7 +611,7 @@ else:
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Mobile button layout (hidden on desktop)
-    st.markdown("<div class='mobile-only'>", unsafe_allow_html=True)
+    st.markdown("<div data-testid='mobile-layout'>", unsafe_allow_html=True)
     mobile_col1, mobile_col2 = st.columns(2)
     with mobile_col1:
         if st.button(
@@ -678,7 +671,7 @@ else:
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Mobile buttons below video (Flag and All 30)
-    st.markdown("<div class='mobile-only'>", unsafe_allow_html=True)
+    st.markdown("<div data-testid='mobile-layout'>", unsafe_allow_html=True)
     mobile_col3, mobile_col4, mobile_col5 = st.columns([1, 1, 1])
     with mobile_col3:
         if st.button("🚩 Flag", width="stretch", key="flag_btn_mobile"):
