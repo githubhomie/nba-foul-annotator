@@ -18,52 +18,24 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Force sidebar to always be visible - CRITICAL CSS
+# Mobile-friendly sidebar CSS - properly supports collapse/expand
 st.markdown("""
 <style>
-    /* FORCE SIDEBAR OPEN - Multiple selectors for maximum compatibility */
-    section[data-testid="stSidebar"] {
+    /* Mobile responsive sidebar */
+    @media (max-width: 768px) {
+        section[data-testid="stSidebar"] {
+            width: 100% !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            width: 100% !important;
+        }
+    }
+
+    /* Ensure sidebar collapse button is visible and functional */
+    button[data-testid="collapsedControl"] {
         display: block !important;
-        visibility: visible !important;
-        width: 21rem !important;
-        min-width: 21rem !important;
-        transform: none !important;
-        transition: none !important;
-    }
-    section[data-testid="stSidebar"][aria-hidden="true"] {
-        display: block !important;
-        visibility: visible !important;
-    }
-    section[data-testid="stSidebar"] > div {
-        display: block !important;
-        visibility: visible !important;
-    }
-    /* Hide collapse button completely */
-    button[kind="header"][data-testid="baseButton-header"],
-    button[data-testid="collapsedControl"],
-    [data-testid="collapsedControl"] {
-        display: none !important;
-        visibility: hidden !important;
-        pointer-events: none !important;
-    }
-    /* Remove any margins/padding that create white space */
-    .main .block-container {
-        padding-left: 2rem !important;
-        max-width: 100% !important;
     }
 </style>
-<script>
-    // JavaScript fallback to force sidebar open
-    setTimeout(function() {
-        const sidebar = document.querySelector('[data-testid="stSidebar"]');
-        if (sidebar) {
-            sidebar.style.display = 'block';
-            sidebar.style.visibility = 'visible';
-            sidebar.style.transform = 'none';
-            sidebar.removeAttribute('aria-hidden');
-        }
-    }, 100);
-</script>
 """, unsafe_allow_html=True)
 
 # Clean centered layout
