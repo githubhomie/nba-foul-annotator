@@ -568,11 +568,10 @@ else:
         st.image(current_frame_data, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Foul type filter at bottom
+    # Bottom controls - Filter and info
     st.markdown("---")
 
-    # Sidebar toggle button and filter in same row
-    col_filter, col_sidebar = st.columns([3, 1])
+    col_filter, col_info = st.columns([2, 1])
 
     with col_filter:
         foul_types = sorted(set(clip['foul_type'] for clip in all_clips))
@@ -585,26 +584,18 @@ else:
             key="foul_type_filter_bottom"
         )
 
-    with col_sidebar:
-        st.markdown("<br>", unsafe_allow_html=True)  # Add spacing to align with selectbox
-        st.markdown("""
-        <button onclick="
-            const sidebar = window.parent.document.querySelector('[data-testid=\\'stSidebar\\']');
-            if (sidebar) {
-                const isCollapsed = sidebar.getAttribute('aria-expanded') === 'false';
-                const collapseButton = window.parent.document.querySelector('[data-testid=\\'collapsedControl\\']');
-                if (collapseButton && isCollapsed) {
-                    collapseButton.click();
-                }
-            }
-        " style="
-            width: 100%;
+    with col_info:
+        # Show key info for mobile users who can't access sidebar
+        st.markdown(f"""
+        <div style="
             padding: 0.5rem;
             background-color: #262730;
-            color: white;
             border: 1px solid #4e4e5a;
             border-radius: 0.25rem;
-            cursor: pointer;
-            font-weight: 600;
-        ">📊 Settings</button>
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+        ">
+            <strong>👤 {st.session_state.annotator_name}</strong><br>
+            📊 Today: {st.session_state.session_annotations} clips
+        </div>
         """, unsafe_allow_html=True)
