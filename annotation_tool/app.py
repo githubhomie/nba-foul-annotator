@@ -18,27 +18,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Consolidated CSS with proper mobile responsiveness
+# Simple CSS - let Streamlit handle responsive behavior
 st.markdown("""
 <style>
-    /* Ensure sidebar is visible by default */
-    section[data-testid="stSidebar"] {
-        display: block !important;
-        visibility: visible !important;
-    }
-
-    /* Ensure sidebar collapse button is visible and functional */
-    button[data-testid="collapsedControl"] {
-        display: block !important;
-        visibility: visible !important;
-    }
-
     /* Hide Streamlit header and menu */
     header[data-testid="stHeader"] {
         display: none !important;
     }
 
-    /* Desktop styles - these will be overridden on mobile */
+    /* Basic layout */
     .block-container {
         padding: 2rem 3rem;
         padding-top: 1rem;
@@ -50,44 +38,6 @@ st.markdown("""
         font-size: 0.85rem;
         padding: 0.4rem 0.8rem;
         font-weight: 600;
-    }
-
-    /* MOBILE RESPONSIVE STYLES */
-    @media (max-width: 768px) {
-        /* Hide desktop info header on mobile */
-        .desktop-info {
-            display: none !important;
-        }
-
-        /* Sidebar full width on mobile */
-        section[data-testid="stSidebar"] {
-            width: 100% !important;
-        }
-
-        /* Reduce padding on mobile */
-        .block-container {
-            padding: 0.5rem !important;
-            max-width: 100% !important;
-        }
-
-        /* Compact buttons on mobile */
-        .stButton > button {
-            font-size: 0.7rem !important;
-            padding: 0.5rem 0.2rem !important;
-            white-space: nowrap !important;
-        }
-
-        /* Make frame container full-width */
-        .frame-container {
-            margin-left: -0.5rem !important;
-            margin-right: -0.5rem !important;
-            width: 100vw !important;
-        }
-
-        .frame-container img {
-            width: 100% !important;
-            display: block !important;
-        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -505,8 +455,8 @@ else:
     foul_class = foul_type.replace('_', '-')
     pct = ((st.session_state.current_clip_idx + 1) / len(clips)) * 100
 
-    # Header info (hide on mobile)
-    st.markdown(f"<div class='desktop-info' style='font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;'>"
+    # Header info (visible on all devices)
+    st.markdown(f"<div style='font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;'>"
                 f"<span class='foul-badge {foul_class}'>{foul_type.upper()}</span>"
                 f"{current_clip['fouler_name']} → {current_clip['fouled_player_name']} | "
                 f"{st.session_state.current_clip_idx + 1}/{len(clips)} ({pct:.0f}%)"
