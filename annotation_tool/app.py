@@ -54,6 +54,11 @@ st.markdown("""
 
     /* MOBILE RESPONSIVE STYLES */
     @media (max-width: 768px) {
+        /* Hide desktop info header on mobile */
+        .desktop-info {
+            display: none !important;
+        }
+
         /* Sidebar full width on mobile */
         section[data-testid="stSidebar"] {
             width: 100% !important;
@@ -65,10 +70,11 @@ st.markdown("""
             max-width: 100% !important;
         }
 
-        /* Smaller buttons on mobile */
+        /* Compact buttons on mobile */
         .stButton > button {
-            font-size: 0.75rem !important;
-            padding: 0.5rem 0.3rem !important;
+            font-size: 0.7rem !important;
+            padding: 0.5rem 0.2rem !important;
+            white-space: nowrap !important;
         }
 
         /* Make frame container full-width */
@@ -513,57 +519,65 @@ else:
     foul_class = foul_type.replace('_', '-')
     pct = ((st.session_state.current_clip_idx + 1) / len(clips)) * 100
 
-    # Header info
-    st.markdown(f"<div style='font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;'>"
+    # Header info (hide on mobile)
+    st.markdown(f"<div class='desktop-info' style='font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;'>"
                 f"<span class='foul-badge {foul_class}'>{foul_type.upper()}</span>"
                 f"{current_clip['fouler_name']} → {current_clip['fouled_player_name']} | "
                 f"{st.session_state.current_clip_idx + 1}/{len(clips)} ({pct:.0f}%)"
                 f"{'  ⚠️ Was: ' + str(existing_annotation['foul_frame']) if existing_annotation else ''}"
                 f"</div>", unsafe_allow_html=True)
 
-    # Single responsive button layout - st.columns automatically stacks on mobile
-    col1, col2, col3, col4, col5 = st.columns([1.2, 1.2, 0.8, 0.8, 0.8], gap="small")
+    # Buttons in horizontal row that doesn't stack
+    col1, col2 = st.columns([3, 1])
+
     with col1:
-        if st.button(
-            f"✓ SELECT {st.session_state.current_frame}",
-            use_container_width=True,
-            type="primary",
-            key="select_btn"
-        ):
-            st.session_state.selected_frame = st.session_state.current_frame
-            st.rerun()
-    with col2:
-        if st.session_state.selected_frame is not None:
+        # Use st.columns for SELECT and SAVE side by side
+        btn_col1, btn_col2 = st.columns(2)
+        with btn_col1:
             if st.button(
-                f"✅ SAVE {st.session_state.selected_frame}",
+                f"✓ SEL {st.session_state.current_frame}",
                 use_container_width=True,
                 type="primary",
-                key="save_btn"
+                key="select_btn"
             ):
-                save_and_next(current_clip, st.session_state.selected_frame)
-        else:
-            st.button("Select first", use_container_width=True, disabled=True, key="save_btn_disabled")
-    with col3:
-        if st.button("🚩 Flag", use_container_width=True, key="flag_btn"):
-            save_annotation(
-                current_clip['game_id'],
-                current_clip['event_num'],
-                -1,
-                annotator=st.session_state.annotator_name,
-                notes="Flagged as bad/unclear clip"
-            )
-            st.session_state.session_annotations += 1
-            next_clip()
-            st.rerun()
-    with col4:
-        btn_text = "8-22" if st.session_state.load_all_frames else "All 30"
-        if st.button(btn_text, use_container_width=True, key="load_all_btn"):
-            st.session_state.load_all_frames = not st.session_state.load_all_frames
-            st.rerun()
-    with col5:
-        can_go_back = len(st.session_state.clip_history) > 0
-        if st.button("↶ Back", use_container_width=True, key="back_btn", disabled=not can_go_back, help="Undo - go back to previous clip"):
-            back_clip()
+                st.session_state.selected_frame = st.session_state.current_frame
+                st.rerun()
+        with btn_col2:
+            if st.session_state.selected_frame is not None:
+                if st.button(
+                    f"✅ SAVE {st.session_state.selected_frame}",
+                    use_container_width=True,
+                    type="primary",
+                    key="save_btn"
+                ):
+                    save_and_next(current_clip, st.session_state.selected_frame)
+            else:
+                st.button("Select first", use_container_width=True, disabled=True, key="save_btn_disabled")
+
+    with col2:
+        # Smaller utility buttons in a row
+        util_col1, util_col2, util_col3 = st.columns(3)
+        with util_col1:
+            if st.button("🚩", use_container_width=True, key="flag_btn", help="Flag as bad clip"):
+                save_annotation(
+                    current_clip['game_id'],
+                    current_clip['event_num'],
+                    -1,
+                    annotator=st.session_state.annotator_name,
+                    notes="Flagged as bad/unclear clip"
+                )
+                st.session_state.session_annotations += 1
+                next_clip()
+                st.rerun()
+        with util_col2:
+            btn_text = "8-22" if st.session_state.load_all_frames else "All"
+            if st.button(btn_text, use_container_width=True, key="load_all_btn", help="Toggle frame range"):
+                st.session_state.load_all_frames = not st.session_state.load_all_frames
+                st.rerun()
+        with util_col3:
+            can_go_back = len(st.session_state.clip_history) > 0
+            if st.button("↶", use_container_width=True, key="back_btn", disabled=not can_go_back, help="Go back"):
+                back_clip()
 
     # Scrubber directly below header
     st.markdown("<div class='controls-compact' style='margin-top: 0.3rem; margin-bottom: 0.3rem;'>", unsafe_allow_html=True)
