@@ -215,8 +215,6 @@ if 'current_frame' not in st.session_state:
     st.session_state.current_frame = 13  # Start at ideal frame
 if 'is_playing' not in st.session_state:
     st.session_state.is_playing = False
-if 'load_all_frames' not in st.session_state:
-    st.session_state.load_all_frames = False
 if 'clip_history' not in st.session_state:
     st.session_state.clip_history = []
 
@@ -298,7 +296,6 @@ def navigate_to_clip(idx, add_to_history=True):
     st.session_state.selected_frame = None
     st.session_state.current_frame = 13  # Reset to ideal frame
     st.session_state.is_playing = False
-    st.session_state.load_all_frames = False  # Reset to default 8-22 range
 
 def next_clip():
     """Move to next clip"""
@@ -398,14 +395,6 @@ with st.sidebar:
             value=st.session_state.show_annotated
         )
 
-        # Get unique foul types
-        foul_types = sorted(set(clip['foul_type'] for clip in all_clips))
-        st.session_state.filter_foul_type = st.selectbox(
-            "Foul Type",
-            ["All"] + foul_types,
-            index=0
-        )
-
         # Apply filters
         st.session_state.clips = filter_clips(all_clips)
         st.info(f"Showing {len(st.session_state.clips)} clips")
@@ -500,11 +489,8 @@ else:
                 skip_clip()
         st.stop()
 
-    # Load frames based on toggle
-    if st.session_state.load_all_frames:
-        playback_frames = all_frames  # All 30 frames (0-29)
-    else:
-        playback_frames = [(idx, img) for idx, img in all_frames if 8 <= idx <= 22]  # Middle 15 frames
+    # Always load all 30 frames
+    playback_frames = all_frames  # All 30 frames (0-29)
 
     # Get current frame image
     current_frame_data = next((img for idx, img in playback_frames if idx == st.session_state.current_frame), None)
@@ -527,77 +513,18 @@ else:
                 f"{'  ⚠️ Was: ' + str(existing_annotation['foul_frame']) if existing_annotation else ''}"
                 f"</div>", unsafe_allow_html=True)
 
-    # HTML buttons that don't stack - use onclick to set session state
-    selected_frame = st.session_state.selected_frame
-    can_save = selected_frame is not None
-    can_go_back = len(st.session_state.clip_history) > 0
-    btn_text = "8-22" if st.session_state.load_all_frames else "All"
-
-    # Initialize button action state
-    if 'button_action' not in st.session_state:
-        st.session_state.button_action = None
-
-    st.markdown(f"""
-    <div style="display: flex; gap: 0.3rem; margin-bottom: 0.5rem; flex-wrap: nowrap;">
-        <form action="" method="get">
-            <button type="submit" name="action" value="select"
-                    style="flex: 1.2; padding: 0.6rem 0.5rem; background: #ff4b4b; color: white;
-                           border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer;
-                           font-size: 0.85rem; width: 100%;">
-                ✓ SEL {st.session_state.current_frame}
-            </button>
-        </form>
-        <form action="" method="get">
-            <button type="submit" name="action" value="save"
-                    style="flex: 1.2; padding: 0.6rem 0.5rem;
-                           background: {'#ff4b4b' if can_save else '#cccccc'};
-                           color: white; border: none; border-radius: 0.5rem;
-                           font-weight: 600; cursor: {'pointer' if can_save else 'not-allowed'};
-                           font-size: 0.85rem; width: 100%;"
-                    {'disabled' if not can_save else ''}>
-                ✅ SAVE {selected_frame if can_save else ''}
-            </button>
-        </form>
-        <form action="" method="get">
-            <button type="submit" name="action" value="flag"
-                    style="flex: 0.6; padding: 0.6rem 0.3rem; background: #262730; color: white;
-                           border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.85rem; width: 100%;">
-                🚩
-            </button>
-        </form>
-        <form action="" method="get">
-            <button type="submit" name="action" value="toggle"
-                    style="flex: 0.6; padding: 0.6rem 0.3rem; background: #262730; color: white;
-                           border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.85rem; width: 100%;">
-                {btn_text}
-            </button>
-        </form>
-        <form action="" method="get">
-            <button type="submit" name="action" value="back"
-                    style="flex: 0.6; padding: 0.6rem 0.3rem;
-                           background: {'#262730' if can_go_back else '#444'}; color: white;
-                           border: none; border-radius: 0.5rem;
-                           cursor: {'pointer' if can_go_back else 'not-allowed'}; font-size: 0.85rem; width: 100%;"
-                    {'disabled' if not can_go_back else ''}>
-                ↶
-            </button>
-        </form>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Check query params for button action
-    query_params = st.query_params
-    if 'action' in query_params:
-        action = query_params['action']
-
-        if action == 'select':
-            st.session_state.selected_frame = st.session_state.current_frame
-            st.query_params.clear()
-            st.rerun()
-        elif action == 'save' and can_save:
-            save_and_next(current_clip, st.session_state.selected_frame)
-            st.query_params.clear()
-        elif action == 'flag':
+    # Simple button layout - Save and Flag only
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        if st.button(
+            f"✓ SAVE FRAME {st.session_state.current_frame}",
+            use_container_width=True,
+            type="primary",
+            key="save_btn"
+        ):
+            save_and_next(current_clip, st.session_state.current_frame)
+    with col2:
+        if st.button("🚩 Flag", use_container_width=True, key="flag_btn"):
             save_annotation(
                 current_clip['game_id'],
                 current_clip['event_num'],
@@ -607,24 +534,13 @@ else:
             )
             st.session_state.session_annotations += 1
             next_clip()
-            st.query_params.clear()
             st.rerun()
-        elif action == 'toggle':
-            st.session_state.load_all_frames = not st.session_state.load_all_frames
-            st.query_params.clear()
-            st.rerun()
-        elif action == 'back' and can_go_back:
-            back_clip()
-            st.query_params.clear()
 
     # Scrubber directly below header
     st.markdown("<div class='controls-compact' style='margin-top: 0.3rem; margin-bottom: 0.3rem;'>", unsafe_allow_html=True)
 
-    # Adjust slider range based on load_all_frames
-    if st.session_state.load_all_frames:
-        min_val, max_val = 0, 29
-    else:
-        min_val, max_val = 8, 22
+    # Always show all 30 frames
+    min_val, max_val = 0, 29
 
     # Clamp current frame to valid range
     if st.session_state.current_frame < min_val or st.session_state.current_frame > max_val:
@@ -651,3 +567,15 @@ else:
     if current_frame_data:
         st.image(current_frame_data, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
+
+    # Foul type filter at bottom
+    st.markdown("---")
+    foul_types = sorted(set(clip['foul_type'] for clip in all_clips))
+    options = ["All"] + foul_types
+    current_index = options.index(st.session_state.filter_foul_type) if st.session_state.filter_foul_type in options else 0
+    st.session_state.filter_foul_type = st.selectbox(
+        "Filter by Foul Type",
+        options,
+        index=current_index,
+        key="foul_type_filter_bottom"
+    )
