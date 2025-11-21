@@ -18,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Mobile-friendly sidebar CSS - properly supports collapse/expand
+# Consolidated CSS with proper mobile responsiveness
 st.markdown("""
 <style>
     /* Ensure sidebar is visible by default */
@@ -27,8 +27,34 @@ st.markdown("""
         visibility: visible !important;
     }
 
-    /* Mobile responsive sidebar */
+    /* Ensure sidebar collapse button is visible and functional */
+    button[data-testid="collapsedControl"] {
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    /* Hide Streamlit header and menu */
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+
+    /* Desktop styles - these will be overridden on mobile */
+    .block-container {
+        padding: 2rem 3rem;
+        padding-top: 1rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .stButton > button {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+        font-weight: 600;
+    }
+
+    /* MOBILE RESPONSIVE STYLES - Must come AFTER desktop to override */
     @media (max-width: 768px) {
+        /* Sidebar full width on mobile */
         section[data-testid="stSidebar"] {
             width: 100% !important;
         }
@@ -36,52 +62,61 @@ st.markdown("""
             width: 100% !important;
         }
 
-        /* Full width frames with no padding on mobile */
+        /* Zero padding for full-width images */
         .block-container {
-            padding: 0.5rem !important;
+            padding: 0 !important;
+            padding-top: 0 !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+        }
+
+        /* Force button rows to stay horizontal and compact */
+        div[data-testid="stHorizontalBlock"] {
+            gap: 0.2rem !important;
+        }
+
+        div[data-testid="column"] {
+            padding: 0.15rem !important;
+            min-width: 0 !important;
+        }
+
+        /* Compact buttons with text truncation */
+        .stButton > button {
+            font-size: 0.6rem !important;
+            padding: 0.3rem 0.2rem !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            min-height: auto !important;
+            height: auto !important;
+        }
+
+        /* Full width images */
+        .stImage {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            margin-left: calc(-1 * var(--gap, 0rem)) !important;
+            margin-right: calc(-1 * var(--gap, 0rem)) !important;
+        }
+
+        img {
+            width: 100% !important;
             max-width: 100% !important;
         }
 
-        /* Smaller buttons on mobile */
-        .stButton > button {
-            font-size: 0.7rem !important;
-            padding: 0.3rem 0.5rem !important;
-        }
-
-        /* Hide bottom navigation buttons on mobile */
-        div[data-testid="column"]:has(button[key="nav_left"]),
-        div[data-testid="column"]:has(button[key="nav_right"]),
-        div[data-testid="column"]:has(button[key="nav_save"]) {
+        /* Hide bottom nav buttons on mobile */
+        button[key="nav_left"],
+        button[key="nav_right"],
+        button[key="nav_save"] {
             display: none !important;
         }
-    }
-
-    /* Ensure sidebar collapse button is visible and functional */
-    button[data-testid="collapsedControl"] {
-        display: block !important;
-        visibility: visible !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Clean centered layout
+# Additional styles
 st.markdown("""
 <style>
-    /* Hide Streamlit header and menu */
-    header[data-testid="stHeader"] {
-        display: none !important;
-    }
-    .block-container {
-        padding: 2rem 3rem !important;
-        padding-top: 1rem !important;
-        max-width: 1400px !important;
-        margin: 0 auto !important;
-    }
-    .stButton > button {
-        font-size: 0.85rem;
-        padding: 0.4rem 0.8rem;
-        font-weight: 600;
-    }
     /* Hide fullscreen button on images */
     button[title="View fullscreen"],
     button[data-testid="StyledFullScreenButton"] {
