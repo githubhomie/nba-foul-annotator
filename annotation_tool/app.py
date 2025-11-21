@@ -52,6 +52,18 @@ st.markdown("""
         font-weight: 600;
     }
 
+    /* Hide collapsed Streamlit trigger buttons */
+    button[data-testid="baseButton-secondary"][aria-label="select"],
+    button[data-testid="baseButton-secondary"][aria-label="save"],
+    button[data-testid="baseButton-secondary"][aria-label="flag"],
+    button[data-testid="baseButton-secondary"][aria-label="toggle"],
+    button[data-testid="baseButton-secondary"][aria-label="back"] {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     /* MOBILE RESPONSIVE STYLES */
     @media (max-width: 768px) {
         /* Hide desktop info header on mobile */
@@ -527,56 +539,79 @@ else:
                 f"{'  ⚠️ Was: ' + str(existing_annotation['foul_frame']) if existing_annotation else ''}"
                 f"</div>", unsafe_allow_html=True)
 
-    # Buttons in horizontal row that doesn't stack
-    col1, col2 = st.columns([3, 1])
+    # HTML buttons that don't stack - with JavaScript to trigger Streamlit buttons
+    selected_frame = st.session_state.selected_frame
+    can_save = selected_frame is not None
+    can_go_back = len(st.session_state.clip_history) > 0
+    btn_text = "8-22" if st.session_state.load_all_frames else "All"
 
+    st.markdown(f"""
+    <div style="display: flex; gap: 0.3rem; margin-bottom: 0.5rem; flex-wrap: nowrap;">
+        <button onclick="document.getElementById('select-trigger').click()"
+                style="flex: 1.2; padding: 0.6rem 0.5rem; background: #ff4b4b; color: white;
+                       border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer;
+                       font-size: 0.85rem;">
+            ✓ SEL {st.session_state.current_frame}
+        </button>
+        <button onclick="document.getElementById('save-trigger').click()"
+                style="flex: 1.2; padding: 0.6rem 0.5rem;
+                       background: {'#ff4b4b' if can_save else '#cccccc'};
+                       color: white; border: none; border-radius: 0.5rem;
+                       font-weight: 600; cursor: {'pointer' if can_save else 'not-allowed'};
+                       font-size: 0.85rem;"
+                {'disabled' if not can_save else ''}>
+            ✅ SAVE {selected_frame if can_save else ''}
+        </button>
+        <button onclick="document.getElementById('flag-trigger').click()"
+                style="flex: 0.6; padding: 0.6rem 0.3rem; background: #262730; color: white;
+                       border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.85rem;">
+            🚩
+        </button>
+        <button onclick="document.getElementById('toggle-trigger').click()"
+                style="flex: 0.6; padding: 0.6rem 0.3rem; background: #262730; color: white;
+                       border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.85rem;">
+            {btn_text}
+        </button>
+        <button onclick="document.getElementById('back-trigger').click()"
+                style="flex: 0.6; padding: 0.6rem 0.3rem;
+                       background: {'#262730' if can_go_back else '#444'}; color: white;
+                       border: none; border-radius: 0.5rem;
+                       cursor: {'pointer' if can_go_back else 'not-allowed'}; font-size: 0.85rem;"
+                {'disabled' if not can_go_back else ''}>
+            ↶
+        </button>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Hidden Streamlit buttons that handle the logic
+    col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
-        # Use st.columns for SELECT and SAVE side by side
-        btn_col1, btn_col2 = st.columns(2)
-        with btn_col1:
-            if st.button(
-                f"✓ SEL {st.session_state.current_frame}",
-                use_container_width=True,
-                type="primary",
-                key="select_btn"
-            ):
-                st.session_state.selected_frame = st.session_state.current_frame
-                st.rerun()
-        with btn_col2:
-            if st.session_state.selected_frame is not None:
-                if st.button(
-                    f"✅ SAVE {st.session_state.selected_frame}",
-                    use_container_width=True,
-                    type="primary",
-                    key="save_btn"
-                ):
-                    save_and_next(current_clip, st.session_state.selected_frame)
-            else:
-                st.button("Select first", use_container_width=True, disabled=True, key="save_btn_disabled")
-
+        if st.button("select", key="select-trigger", label_visibility="collapsed"):
+            st.session_state.selected_frame = st.session_state.current_frame
+            st.rerun()
     with col2:
-        # Smaller utility buttons in a row
-        util_col1, util_col2, util_col3 = st.columns(3)
-        with util_col1:
-            if st.button("🚩", use_container_width=True, key="flag_btn", help="Flag as bad clip"):
-                save_annotation(
-                    current_clip['game_id'],
-                    current_clip['event_num'],
-                    -1,
-                    annotator=st.session_state.annotator_name,
-                    notes="Flagged as bad/unclear clip"
-                )
-                st.session_state.session_annotations += 1
-                next_clip()
-                st.rerun()
-        with util_col2:
-            btn_text = "8-22" if st.session_state.load_all_frames else "All"
-            if st.button(btn_text, use_container_width=True, key="load_all_btn", help="Toggle frame range"):
-                st.session_state.load_all_frames = not st.session_state.load_all_frames
-                st.rerun()
-        with util_col3:
-            can_go_back = len(st.session_state.clip_history) > 0
-            if st.button("↶", use_container_width=True, key="back_btn", disabled=not can_go_back, help="Go back"):
+        if can_save:
+            if st.button("save", key="save-trigger", label_visibility="collapsed"):
+                save_and_next(current_clip, st.session_state.selected_frame)
+    with col3:
+        if st.button("flag", key="flag-trigger", label_visibility="collapsed"):
+            save_annotation(
+                current_clip['game_id'],
+                current_clip['event_num'],
+                -1,
+                annotator=st.session_state.annotator_name,
+                notes="Flagged as bad/unclear clip"
+            )
+            st.session_state.session_annotations += 1
+            next_clip()
+            st.rerun()
+    with col4:
+        if st.button("toggle", key="toggle-trigger", label_visibility="collapsed"):
+            st.session_state.load_all_frames = not st.session_state.load_all_frames
+            st.rerun()
+    with col5:
+        if can_go_back:
+            if st.button("back", key="back-trigger", label_visibility="collapsed"):
                 back_clip()
 
     # Scrubber directly below header
