@@ -39,6 +39,21 @@ st.markdown("""
         padding: 0.4rem 0.8rem;
         font-weight: 600;
     }
+
+    /* Mobile: full-width images */
+    @media (max-width: 768px) {
+        .block-container {
+            padding: 0.5rem !important;
+        }
+
+        .stImage {
+            width: 100% !important;
+        }
+
+        .stImage > img {
+            width: 100% !important;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
