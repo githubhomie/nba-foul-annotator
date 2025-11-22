@@ -564,3 +564,26 @@ else:
             📊 Today: {st.session_state.session_annotations} clips
         </div>
         """, unsafe_allow_html=True)
+
+    # Total completion counter at bottom
+    st.markdown("---")
+    stats = get_annotation_stats()
+    all_clips = st.session_state.all_clips
+    total_clips = len(all_clips)
+    completed_clips = stats['total_annotated']
+    completion_pct = (completed_clips / total_clips * 100) if total_clips > 0 else 0
+
+    st.markdown(f"""
+    <div style="
+        text-align: center;
+        padding: 1rem;
+        background-color: #1a1a1f;
+        border: 2px solid #4e4e5a;
+        border-radius: 0.5rem;
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-top: 1rem;
+    ">
+        🎯 Total Progress: <span style="color: #00d4aa;">{completed_clips}/{total_clips}</span> clips completed ({completion_pct:.1f}%)
+    </div>
+    """, unsafe_allow_html=True)
